@@ -13,25 +13,13 @@ objects =  \
 	OSC/OSCTiming.o \
 	OSC/SimpleWriter.o
 
-default :
-	@echo "platform not specified"
-
-organelle : $(objects) hw_interfaces/SerialMCU.o
-	g++ -o fw_dir/mother $(objects) hw_interfaces/SerialMCU.o
-
-organelle_m : CXXFLAGS += -DCM3GPIO_HW -DMICSEL_SWITCH -DPWR_SWITCH -DOLED_30FPS -DBATTERY_METER -DFIX_ABL_LINK
-organelle_m : $(objects) hw_interfaces/CM3GPIO.o
-	g++ -l wiringPi -o fw_dir/mother $(objects) hw_interfaces/CM3GPIO.o
+default : $(objects) hw_interfaces/CM3GPIO.o
+	g++ -l wiringPi -o controls $(objects) hw_interfaces/CM3GPIO.o
 
 .PHONY : clean
 
 clean :
 	rm main $(objects)
-
-IMAGE_BUILD_VERSION = $(shell cat fw_dir/version)
-IMAGE_BUILD_TAG = $(shell cat fw_dir/buildtag)
-IMAGE_VERSION = $(IMAGE_BUILD_VERSION)$(IMAGE_BUILD_TAG)
-IMAGE_DIR = UpdateOS-$(IMAGE_VERSION)
 
 # Generate with g++ -MM *.c* OSC/*.* 
 main.o: main.cpp OSC/OSCMessage.h OSC/OSCData.h OSC/OSCTiming.h \

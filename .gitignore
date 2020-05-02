@@ -1,7 +1,4 @@
 .DS_Store
 *.o
-main
-UpdateOS*.zip
+controls
 *.pyc
-fw_dir/mother
-tmp

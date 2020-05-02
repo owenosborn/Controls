@@ -9,52 +9,33 @@
 #include "UdpSocket.h"
 #include "Timer.h"
 
-// include hardware interface
-// default to organelle original
-#ifdef CM3GPIO_HW
 #include "hw_interfaces/CM3GPIO.h"
-//#else
-//#include "hw_interfaces/SerialMCU.h"
-#endif
 
+#define OSC_IN_PORT 4001
+#define OSC_OUT_PORT 4000
+
+// knob stuff
 void knobsInput(void);
 void keysInput(void);
-
 static const unsigned int MAX_KNOBS = 6;
 static int16_t knobs_[MAX_KNOBS];
 static const int8_t EXPR_KNOB = 5;
 
+// OSC callbacks
+void setLED(OSCMessage &msg);
+void flashLED(OSCMessage &msg);
 
 // buffer for sending OSC messages 
 SimpleWriter oscBuf;
 
 // hardware interface controls
-// default to organelle original
-#ifdef CM3GPIO_HW
 CM3GPIO controls;
-#else
-SerialMCU controls;
-#endif
 
-/*
-sockets for communicating OSC with other programs we need 3:
-    1) this program receives on 4001
-    2) sends to Pd on 4000
-    3) sends to Aux program (scripts in the System menu) on 4002
-(the destinations are set below)
-*/
-UdpSocket udpSock(4001);
-UdpSocket udpSockAux(4003);
-
+// socket for OSC com
+UdpSocket udpSock(OSC_IN_PORT);
 
 // exit flag
 int quit = 0;
-
-/** OSC messages received internally (from PD or other program) **/
-
-// ui messages
-void setLED(OSCMessage &msg);
-void flashLED(OSCMessage &msg);
 
 int main(int argc, char* argv[]) {
     printf("build date " __DATE__ "   " __TIME__ "/n");
@@ -64,17 +45,13 @@ int main(int argc, char* argv[]) {
     int len = 0;
     int page = 0;
 
-    Timer screenFpsTimer, screenLineTimer, knobPollTimer, pingTimer, upTime;
+    Timer knobPollTimer, pingTimer, upTime;
 
-    screenFpsTimer.reset();
     knobPollTimer.reset();
-    screenLineTimer.reset();
     pingTimer.reset();
     upTime.reset();
 
-
-    udpSock.setDestination(4000, "localhost");
-    udpSockAux.setDestination(4002, "localhost"); // for sending encoder to aux program
+    udpSock.setDestination(OSC_OUT_PORT, "localhost");
     OSCMessage msgIn;
 
     controls.init();
@@ -114,11 +91,8 @@ int main(int argc, char* argv[]) {
         controls.poll();
 
         // handle events
-       /* if (controls.encButFlag) encoderButton();
-        if (controls.encTurnFlag) encoderInput();*/
         if (controls.knobFlag) knobsInput();
         if (controls.keyFlag) keysInput();
-       /* if (controls.footswitchFlag) footswitchInput(); */
 
         // clear the flags for next time
         controls.clearFlags();     
@@ -129,14 +103,12 @@ int main(int argc, char* argv[]) {
             // send a ping in case MCU resets
             pingTimer.reset();
             controls.ping();
-
         }
 
         // poll knobs every 40 ms
         if (knobPollTimer.getElapsed() > 40.f) {
             knobPollTimer.reset();
             controls.pollKnobs();
-          
         }
 
         // check exit flag
@@ -147,11 +119,7 @@ int main(int argc, char* argv[]) {
 
         // main polling loop delay
         // slow it down for cm3 cause all the bit banging starts to eat CPU
-#ifdef CM3GPIO_HW
         usleep(2000);
-#else
-        usleep(750);
-#endif
     } // for;;
 }
 
@@ -177,7 +145,6 @@ void knobsInput() {
     // knob 1-4 + volume + expr , all 0-1023
     for(unsigned i = 0; i < MAX_KNOBS;i++) {
         int v = controls.adcs[i];
-
 
         if(v==0 || v==1023) {
             // allow extremes
@@ -215,8 +182,6 @@ void keysInput(void) {
     }
     controls.keyStatesLast = controls.keyStates;
 }
-
-/* end OSC messages received from MCU */
 
 /* helpers */
 
