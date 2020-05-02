@@ -1,2 +1,4 @@
 # Controls
-Control the Machine
+
+OSC interface to controls
+

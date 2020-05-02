@@ -1,0 +1,7 @@
+.DS_Store
+*.o
+main
+UpdateOS*.zip
+*.pyc
+fw_dir/mother
+tmp
