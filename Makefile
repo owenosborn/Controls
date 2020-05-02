@@ -33,40 +33,6 @@ IMAGE_BUILD_TAG = $(shell cat fw_dir/buildtag)
 IMAGE_VERSION = $(IMAGE_BUILD_VERSION)$(IMAGE_BUILD_TAG)
 IMAGE_DIR = UpdateOS-$(IMAGE_VERSION)
 
-organelle_deploy : organelle
-	@echo "Updating OS to $(IMAGE_VERSION)"
-	fw_dir/scripts/remount-rw.sh
-	@echo "copying fw files to /root"
-	rm -fr /root/fw_dir
-	mkdir /root/fw_dir
-	cp -fr fw_dir/* /root/fw_dir
-	@echo "copying version file to root for backwards compatiblility"
-	cp -fr fw_dir/version /root
-	@echo "copying system files"
-	cp -fr platforms/organelle/rootfs/* /
-	sync
-
-organelle_m_deploy : organelle_m
-	@echo "Updating OS to $(IMAGE_VERSION)"
-	@echo "copying common fw files"
-	rm -fr /home/music/fw_dir
-	mkdir /home/music/fw_dir
-	cp -fr fw_dir/* /home/music/fw_dir
-	@echo "copying platform fw files"
-	cp -fr platforms/organelle_m/fw_dir/* /home/music/fw_dir
-	chown -R music:music /home/music/fw_dir
-	@echo "copying version file to root for backwards compatiblility"
-	cp -fr fw_dir/version /root
-	@echo "copying systems files"
-	mkdir tmp
-	cp -r platforms/organelle_m/rootfs tmp/
-	chown -R root:root tmp/rootfs
-	chown -R music:music tmp/rootfs/home/music
-	cp -fr --preserve=mode,ownership tmp/rootfs/* /
-	rm -fr tmp
-	sync
-
-
 # Generate with g++ -MM *.c* OSC/*.* 
 main.o: main.cpp OSC/OSCMessage.h OSC/OSCData.h OSC/OSCTiming.h \
  OSC/SimpleWriter.h OSC/SimpleWriter.h UdpSocket.h Socket.h Timer.h
