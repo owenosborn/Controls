@@ -14,7 +14,7 @@ objects =  \
 	OSC/SimpleWriter.o
 
 default : $(objects) hw_interfaces/CM3GPIO.o
-	g++ -l wiringPi -o controls $(objects) hw_interfaces/CM3GPIO.o
+	g++ -o controls $(objects) hw_interfaces/CM3GPIO.o -l wiringPi 
 
 .PHONY : clean
 
